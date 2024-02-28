@@ -1,1 +1,11 @@
-# sp24-cmpt-722-scene-graphs
+# Evaluating Text-to-Scene-Graph Methods for 3D Scene Generation
+
+CMPT 722, Spring 2024
+
+Authors: Austin Wang, Colin Li, ZeMing Gong
+
+## Setup
+
+```bash
+pip install -r requirements.txt
+```

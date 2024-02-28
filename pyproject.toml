@@ -1,0 +1,53 @@
+[build-system]
+requires = [
+    "setuptools>=61.0",
+    "wheel",
+    "black>=23.12.1",
+    "isort>=5.13.2"
+]
+
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["text2sg"]
+
+[project]
+name = "text2sg"
+version = "0.0.1"
+authors = [
+  { name="Austin Wang", email="atw7@sfu.ca" },
+  { name="Colin Li", email="test@sfu.ca" },
+  { name="ZeMing Gong", email="zmgong@sfu.ca" },
+]
+description = "Text2SG: Scripts for generating scene graphs from text for scene generation"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "scipy==1.11.4",
+    "matplotlib==3.8.2",
+    "tqdm==4.66.1",
+    "omegaconf==2.3.0",
+    "hydra-core==1.3.2",
+    "torch==2.1.2",
+    "torchvision==0.16.2",
+    "seaborn==0.13.2",
+    "openai==1.12.0",
+    "python-dotenv"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.scripts]
+evaluate = "text2sg.scripts.evaluate:main"
+generate = "text2sg.scripts.generate:main"
+
+[tool.black]
+line-length = 120
+target-version = ['py311']
+
+[tool.isort]
+line_length = 120
+profile = "black"

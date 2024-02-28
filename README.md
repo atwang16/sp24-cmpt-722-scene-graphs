@@ -7,5 +7,5 @@ Authors: Austin Wang, Colin Li, ZeMing Gong
 ## Setup
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```

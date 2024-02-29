@@ -10,16 +10,16 @@ SCENE_GRAPH_PROMPT = """Please follow the examples in the Visual Genome dataset 
 "{}"
 Return the output in a JSON format according to the following format:
 {{
-  "room_type": one of 'bedroom', 'livingroom', 'diningroom', or 'other',
   "objects": [
     {{
-      "id": id of object,
+      "id": id of object as int,
       "name": name of object as string,
       "attributes": array of string,
     }}
   ],
   "relationships": [
     {{
+        "id": id of relationship as int,
         "type": type of relationship as string,
         "subject_id": id of object which is the subject of the relationship,
         "target_id": id of object which is the target of the relationship
@@ -56,5 +56,5 @@ class LLMBasedT2SGParser:
             output_json = json.loads(raw_output)
         except json.JSONDecodeError:
             raise ValueError(f"Failed to parse scene graph response from OpenAI as JSON:\n{raw_output}")
-        
+
         return SceneGraph.from_json(output_json)

@@ -1,0 +1,2 @@
+scene_graphs: .data/datasets/vg/scene_graphs.json
+region_descriptions: .data/datasets/vg/region_descriptions.json

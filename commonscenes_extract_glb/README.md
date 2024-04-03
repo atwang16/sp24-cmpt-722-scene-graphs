@@ -99,6 +99,11 @@ python eval_3dfront.py --exp /media/ymxlzgy/Data/graphto3d_models/balancing/all 
 
 `--num_samples`: the number of experiment rounds, when evaluate the diversity.
 
+FOR CMPT722, generate glb and images:
+```
+python eval_3dfront.py --exp checkpoint/balancing/all --epoch 180 --visualize True --evaluate_diversity False --num_samples 5 --gen_shape True --no_stool True --export_3d True
+```
+
 
 ### FID/KID
 This metric aims to evaluate scene-level fidelity. To evaluate FID/KID, you need to collect ground truth top-down renderings by running `collect_gt_sdf_images.py`.

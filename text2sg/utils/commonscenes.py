@@ -1,0 +1,18 @@
+relationship_map = {
+    "none": 0,
+    "left": 1,
+    "right": 2,
+    "front": 3,
+    "behind": 4,
+    "close by": 5,
+    "above": 6,
+    "standing on": 7,
+    "bigger than": 8,
+    "smaller than": 9,
+    "taller than": 10,
+    "shorter than": 11,
+    "symmetrical to": 12,
+    "same style as": 13,
+    "same super category as": 14,
+    "same material as": 15,
+}

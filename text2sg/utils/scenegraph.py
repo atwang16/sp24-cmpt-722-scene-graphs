@@ -5,6 +5,8 @@ from typing import Generator, Optional, Self
 import numpy as np
 from pyvis.network import Network
 
+from text2sg.utils.commonscenes import relationship_map
+
 
 @dataclass
 class Object:
@@ -174,3 +176,25 @@ class SceneGraph:
                 os.path.join(output_dir, "scene_graph.html") if output_dir is not None else f"scene_graph.html"
             )
             net.show(output_path, notebook=False)
+
+    def export(self, format="json"):
+        if format == "json":
+            output = {"objects": [], "relationships": []}
+            for obj in self.objects:
+                output["objects"].append({"id": obj.id, "name": obj.name, "attributes": obj.attributes})
+            for rel in self.relationships:
+                output["relationships"].append(
+                    {"id": rel.id, "type": rel.type, "subject_id": rel.subject, "target_id": rel.target}
+                )
+
+        elif format == "commonscenes":
+            output = {"scan": self.id, "objects": {}, "relationships": []}
+            for obj in self.objects:
+                output["objects"][obj.id] = obj.name
+            for rel in self.relationships:
+                output["relationships"].append([rel.subject, rel.target, relationship_map[rel.type], rel.type])
+        
+        else:
+            raise NotImplementedError(f"Format not supported: {format}")
+
+        return output

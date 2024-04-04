@@ -1,3 +1,4 @@
-room_type: diningroom
+module: ThreedFrontDataset
+room_type: bedroom
 dataset_directory: .data/datasets/3dfront/InstructScene/threed_front_${data.room_type}
 train_stats: dataset_stats.txt

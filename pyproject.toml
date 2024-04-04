@@ -32,7 +32,9 @@ dependencies = [
     "torchvision==0.16.2",
     "seaborn==0.13.2",
     "openai==1.12.0",
-    "python-dotenv"
+    "python-dotenv",
+    "diffusers==0.27.2",
+    "SceneGraphParser==0.1.0",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -41,7 +43,7 @@ classifiers = [
 ]
 
 [project.scripts]
-evaluate = "text2sg.scripts.evaluate:main"
+evaluate-sg = "text2sg.scripts.evaluate_sg:main"
 generate = "text2sg.scripts.generate:main"
 
 [tool.black]

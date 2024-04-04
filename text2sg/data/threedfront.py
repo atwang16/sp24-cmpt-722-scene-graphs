@@ -105,7 +105,7 @@ class ThreedFrontDataset:
         ]
 
         out = self._fill_templates(descriptions, self.object_types, self.predicate_types, object_descs)
-        return (sample["id"], out[0])
+        return sample["id"], out[0], None
 
     """
     Taken from https://stackoverflow.com/questions/20336524/verify-correct-use-of-a-and-an-in-english-texts-python

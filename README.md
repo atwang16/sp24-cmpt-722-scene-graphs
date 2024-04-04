@@ -26,4 +26,21 @@ unzip scene_graphs.json.zip
 unzip region_descriptions.json.zip
 ```
 
+<<<<<<< Updated upstream
 ## Usage
+=======
+2. Download the SG-FRONT scene graph dataset from CommonScenes:
+```bash
+mkdir -p .data/datasets/3dfront
+cd .data/datasets/3dfront
+wget https://www.campar.in.tum.de/public_datasets/2023_commonscenes_zhai/SG_FRONT.zip
+unzip SG_FRONT.zip
+```
+
+3. Download the scene description dataset from InstructScene:
+```bash
+mkdir -p .data/datasets/3dfront
+cd .data/datasets/3dfront
+wget https://huggingface.co/datasets/chenguolin/InstructScene_dataset/resolve/main/InstructScene.zip?download=true
+```
+>>>>>>> Stashed changes

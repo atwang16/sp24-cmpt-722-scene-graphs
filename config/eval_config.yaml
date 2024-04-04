@@ -1,4 +1,6 @@
+evaluation_mode: scene_graphs
+
 defaults:
   - _self_
-  - data: vg
+  - data: 3dfront
   - model: llm

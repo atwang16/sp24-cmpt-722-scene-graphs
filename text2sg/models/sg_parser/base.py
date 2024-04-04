@@ -1,5 +1,7 @@
 from omegaconf import DictConfig
 
+from text2sg.utils import SceneGraph
+
 
 class BaseSceneParser:
     """
@@ -14,7 +16,7 @@ class BaseSceneParser:
     def __init__(self, cfg: DictConfig):
         self.cfg = cfg
 
-    def parse(self, text: str):
+    def parse(self, text: str) -> SceneGraph:
         """Parse scene description into a structured scene specification.
 
         :param scene_spec: unstructured scene specification

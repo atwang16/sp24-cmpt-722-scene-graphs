@@ -5,7 +5,7 @@ from .base import BaseSceneParser
 
 
 class VanillaParser(BaseSceneParser):
-    def parse(self, text: str):
+    def parse(self, text: str) -> SceneGraph:
         graph = sng_parser.parse(text)
 
         scene_graph = {

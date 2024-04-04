@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Generator, Optional, Self
 
 import numpy as np
+from pyvis.network import Network
 
 
 @dataclass
@@ -57,21 +58,27 @@ class Relationship:
 
 @dataclass
 class SceneGraph:
+    id: Optional[str]
     objects: list[Object]
     relationships: list[Relationship]
 
     @classmethod
-    def from_json(cls, data: dict) -> Self:
+    def from_json(cls, data: dict, id: Optional[str] = None) -> Self:
         objects = {obj["id"]: Object(**obj) for obj in data["objects"]}
         relationships = []
         for rel in data["relationships"]:
             relationships.append(
-                Relationship(type=rel["type"], subject=objects[rel["subject_id"]], target=objects[rel["target_id"]])
+                Relationship(
+                    id=rel["id"],
+                    type=rel["type"],
+                    subject=objects[rel["subject_id"]],
+                    target=objects[rel["target_id"]],
+                )
             )
             objects[rel["subject_id"]].relationships.append(relationships[-1])
             objects[rel["target_id"]].relationships.append(relationships[-1])
         return cls(
-            room_type=data["room_type"],
+            id=id,
             objects=list(objects.values()),
             relationships=relationships,
         )
@@ -136,9 +143,25 @@ class SceneGraph:
                 graph_kernel += _compute_rooted_walk_graph_kernel(obj_1, obj_2, max_length=max_length)
         return graph_kernel
 
-    def compute_distance(self, other: Self, max_length: int = 4) -> float:
-        return np.sqrt(
-            self._compute_graph_kernel(self, max_length)
-            - 2 * self._compute_graph_kernel(other, max_length)
-            + other._compute_graph_kernel(other, max_length)
+    def _compute_graph_kernel_normalized(self, other: Self, max_length: int = 4) -> float:
+        return self._compute_graph_kernel(other, max_length) / np.maximum(
+            self._compute_graph_kernel(self, max_length), other._compute_graph_kernel(other, max_length)
         )
+
+    def compute_distance(self, other: Self, max_length: int = 4) -> float:
+        return 1 - self._compute_graph_kernel_normalized(other, max_length)
+
+    def visualize(self):
+        net = Network(directed=True)
+        for obj in self.objects:
+            net.add_node(obj.id, label=obj.name, color="blue")
+            for attribute in obj.attributes:
+                net.add_node(f"{obj.id}-{attribute}", label=attribute, color="yellow")
+                net.add_edge(obj.id, f"{obj.id}-{attribute}")
+
+        for relationship in self.relationships:
+            net.add_edge(relationship.subject.id, relationship.target.id, label=relationship.type)
+        if self.id:
+            net.show(f"{self.id}_scene_graph.html", notebook=False)
+        else:
+            net.show("scene_graph.html", notebook=False)

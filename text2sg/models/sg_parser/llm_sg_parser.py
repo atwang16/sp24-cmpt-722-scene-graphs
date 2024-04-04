@@ -75,7 +75,7 @@ class LLMSceneParser(BaseSceneParser):
         super().__init__(cfg)
         self.prompt = LLMSceneParser.prompts[cfg.prompt_type]
 
-    def parse(self, text: str):
+    def parse(self, text: str) -> SceneGraph:
         """Parse scene description into a structured scene specification.
 
         The parsing function currently expects a "text" type scene specification and expects to find one of the

@@ -1,6 +1,7 @@
 import json
 
 from omegaconf import DictConfig
+from tqdm import tqdm
 
 from text2sg.utils import SceneGraph
 
@@ -20,7 +21,7 @@ class VisualGenomeDataset:
         return len(self.scene_graphs)
 
     def __getitem__(self, index):
-        return self.region_descriptions[index], self.scene_graphs[index]
+        return f"vg_{index}", self.region_descriptions[index], self.scene_graphs[index]
 
     @staticmethod
     def parse_vg_scene_graphs(scene_graphs) -> list[SceneGraph]:
@@ -34,13 +35,13 @@ class VisualGenomeDataset:
             list[dict[str, Any]]: A list of scene graphs in the text2sg format.
         """
         parsed_scene_graphs = []
-        for scene_graph in scene_graphs:
+        for scene_graph in tqdm(scene_graphs):
             parsed_scene_graph = {
                 "objects": [
                     {
                         "id": obj["object_id"],
                         "name": obj["names"][0],
-                        "attributes": obj["attributes"],
+                        "attributes": obj.get("attributes", []),
                     }
                     for obj in scene_graph["objects"]
                 ],
@@ -69,7 +70,7 @@ class VisualGenomeDataset:
             list[str]: A list of region descriptions in the text2sg format.
         """
         descriptions = []
-        for image in region_descriptions:
+        for image in tqdm(region_descriptions):
             for region in image["regions"]:
                 full_description = ". ".join([region["phrase"].strip() for region_description in region_descriptions])
             descriptions.append(full_description)

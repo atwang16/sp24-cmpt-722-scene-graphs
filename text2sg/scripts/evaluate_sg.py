@@ -31,4 +31,8 @@ def main(cfg: DictConfig) -> None:
             pred_scene_graph.visualize()
         distances.append(pred_scene_graph.compute_distance(target))
 
+        # end if we have enough samples
+        if idx + 1 >= cfg.num_samples:
+            break
+
     print(f"Average scene graph distance: {np.mean(np.array(distances))}")

@@ -7,6 +7,8 @@ import numpy as np
 from omegaconf import DictConfig
 from nltk.corpus import cmudict
 
+from text2sg.utils import SceneGraph
+
 
 class ThreedFrontDataset:
     """
@@ -99,13 +101,43 @@ class ThreedFrontDataset:
         with open(models_info_path, "rb") as f:
             models_info = pickle.load(f)
 
-        object_descs = [
-            np.random.choice((model_info["blip_caption"], model_info["msft_caption"], model_info["chatgpt_caption"]))
-            for model_info in models_info
-        ]
+        # object_descs = [
+        #     np.random.choice((model_info["blip_caption"], model_info["msft_caption"], model_info["chatgpt_caption"]))
+        #     for model_info in models_info
+        # ]
+        object_descs = [mi["chatgpt_caption"] for mi in models_info]
 
-        out = self._fill_templates(descriptions, self.object_types, self.predicate_types, object_descs)
-        return sample["id"], out[0], None
+        text, selected_relations, selected_descs = self._fill_templates(
+            descriptions, self.object_types, self.predicate_types, object_descs, num_relations=(2, 4)
+        )
+
+        # build ground truth scene graph
+        scene_graph = {
+            "objects": [],
+            "relationships": [],
+        }
+        added_objects = set()
+        for idx, (subject_id, relationship_id, target_id) in enumerate(selected_relations):
+            for id_ in (subject_id, target_id):
+                if id_ not in added_objects:
+                    scene_graph["objects"].append(
+                        {
+                            "id": id_,
+                            "name": self.object_types[descriptions["obj_class_ids"][id_]],
+                            "attributes": [],
+                        }
+                    )
+                    added_objects.add(id_)
+            scene_graph["relationships"].append(
+                {
+                    "id": idx + 1,
+                    "type": self.predicate_types[relationship_id],
+                    "subject_id": subject_id,
+                    "target_id": target_id,
+                }
+            )
+
+        return sample["id"], text, SceneGraph.from_json(scene_graph)
 
     """
     Taken from https://stackoverflow.com/questions/20336524/verify-correct-use-of-a-and-an-in-english-texts-python
@@ -143,6 +175,7 @@ class ThreedFrontDataset:
         object_types: list[str],
         predicate_types: list[str],
         object_descs: Optional[list[str]] = None,
+        num_relations: tuple[int, int] = (1, 2),
         return_obj_ids=False,
     ) -> tuple[str, dict[int, int], list[tuple[int, int, int]], list[tuple[str, str]]]:
         if object_descs is None:
@@ -156,12 +189,12 @@ class ThreedFrontDataset:
         # Describe the relations between the main objects and others
         selected_relation_indices = np.random.choice(
             len(desc["obj_relations"]),
-            min(np.random.choice([1, 2]), len(desc["obj_relations"])),  # select 1 or 2 relations
+            min(np.random.choice(num_relations), len(desc["obj_relations"])),
             replace=False,
         )
         selected_relations = [desc["obj_relations"][idx] for idx in selected_relation_indices]
         selected_relations = [
-            (int(obj_class_ids[s]), int(p), int(obj_class_ids[o])) for s, p, o in selected_relations
+            (int(s), int(p), int(o)) for s, p, o in selected_relations
         ]  # e.g., [(4, 2, 18), ...]; 4, 18 are class ids; 2 is predicate id
         selected_descs = []
         selected_sentences = []

@@ -1,6 +1,7 @@
-evaluation_mode: scene_graphs
+viz_frequency: 10
+num_samples: 100
 
 defaults:
   - _self_
-  - data: 3dfront
+  - data: 3dfront_bedroom
   - model: llm

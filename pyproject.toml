@@ -35,6 +35,9 @@ dependencies = [
     "python-dotenv",
     "diffusers==0.27.2",
     "SceneGraphParser==0.1.0",
+    "einops==0.7.0",
+    "open_clip_torch==2.24.0",
+    "transformers==4.39.3",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

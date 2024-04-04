@@ -69,7 +69,7 @@ class SceneGraph:
         for rel in data["relationships"]:
             relationships.append(
                 Relationship(
-                    id=rel["id"],
+                    id=rel.get("id"),
                     type=rel["type"],
                     subject=objects[rel["subject_id"]],
                     target=objects[rel["target_id"]],

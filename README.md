@@ -15,7 +15,7 @@ python -m spacy download en
 
 ### Data
 
-1. (DEPRECATED) Download the [Visual Genome dataset](https://homes.cs.washington.edu/~ranjay/visualgenome/api.html):
+1. Download the [Visual Genome dataset](https://homes.cs.washington.edu/~ranjay/visualgenome/api.html):
 ```bash
 mkdir -p .data/datasets/vg
 cd .data/datasets/vg
@@ -26,9 +26,6 @@ unzip scene_graphs.json.zip
 unzip region_descriptions.json.zip
 ```
 
-<<<<<<< Updated upstream
-## Usage
-=======
 2. Download the SG-FRONT scene graph dataset from CommonScenes:
 ```bash
 mkdir -p .data/datasets/3dfront
@@ -43,4 +40,10 @@ mkdir -p .data/datasets/3dfront
 cd .data/datasets/3dfront
 wget https://huggingface.co/datasets/chenguolin/InstructScene_dataset/resolve/main/InstructScene.zip?download=true
 ```
->>>>>>> Stashed changes
+
+## Usage
+
+Evaluation:
+```bash
+evaluate-sg data=3dfront_bedroom model=llm
+```

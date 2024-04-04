@@ -1,7 +1,9 @@
+run_name: eval_${data.module}_${model.module}
+output_dir: visualizations
 viz_frequency: 10
 num_samples: 100
 
 defaults:
   - _self_
   - data: 3dfront_bedroom
-  - model: llm
+  - model: vanilla_parser

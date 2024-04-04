@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field
 from typing import Generator, Optional, Self
 
@@ -151,7 +152,7 @@ class SceneGraph:
     def compute_distance(self, other: Self, max_length: int = 4) -> float:
         return 1 - self._compute_graph_kernel_normalized(other, max_length)
 
-    def visualize(self):
+    def visualize(self, output_dir: Optional[str] = None):
         net = Network(directed=True)
         for obj in self.objects:
             net.add_node(obj.id, label=obj.name, color="blue")
@@ -162,6 +163,14 @@ class SceneGraph:
         for relationship in self.relationships:
             net.add_edge(relationship.subject.id, relationship.target.id, label=relationship.type)
         if self.id:
-            net.show(f"{self.id}_scene_graph.html", notebook=False)
+            output_path = (
+                os.path.join(output_dir, f"{self.id}_scene_graph.html")
+                if output_dir is not None
+                else f"{self.id}_scene_graph.html"
+            )
+            net.show(output_path, notebook=False)
         else:
-            net.show("scene_graph.html", notebook=False)
+            output_path = (
+                os.path.join(output_dir, "scene_graph.html") if output_dir is not None else f"scene_graph.html"
+            )
+            net.show(output_path, notebook=False)

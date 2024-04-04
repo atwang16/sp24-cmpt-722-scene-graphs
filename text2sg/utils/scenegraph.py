@@ -192,8 +192,11 @@ class SceneGraph:
             for obj in self.objects:
                 output["objects"][obj.id] = obj.name
             for rel in self.relationships:
-                output["relationships"].append([rel.subject, rel.target, relationship_map[rel.type], rel.type])
-        
+                # TODO: -1 is not a great default value but there is no guarantee as of now that the generated scene
+                # graphs will be restricted to the relationship types. The only one we can "enforce" this for is the 
+                # LLM method, since we can prompt it to restrict its relationship set to the allowed ones.
+                output["relationships"].append([rel.subject, rel.target, relationship_map.get(rel.type, -1), rel.type])
+
         else:
             raise NotImplementedError(f"Format not supported: {format}")
 

@@ -28,6 +28,7 @@ def main(cfg: DictConfig) -> None:
     # run model on data
     distances = []
     visualized_scenes = {}
+    commonscenes_output = {"scans": []}
     for idx, (id_, inp_description, target) in tqdm(enumerate(loader)):
         # load model
         pred_scene_graph = model.parse(inp_description)
@@ -38,6 +39,7 @@ def main(cfg: DictConfig) -> None:
             visualized_scenes[id_] = inp_description
             pred_scene_graph.visualize(output_dir)
         distances.append(pred_scene_graph.compute_distance(target))
+        commonscenes_output["scans"].append(pred_scene_graph.export(format="commonscenes"))
 
         # end if we have enough samples
         if idx + 1 >= cfg.num_samples:
@@ -55,3 +57,6 @@ def main(cfg: DictConfig) -> None:
             f,
             indent=4,
         )
+    
+    with open(os.path.join(output_dir, "commonscenes_relationships.json"), "w") as f:
+        json.dump(commonscenes_output, f, indent=4)

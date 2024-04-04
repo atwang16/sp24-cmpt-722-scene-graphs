@@ -47,3 +47,7 @@ Evaluation:
 ```bash
 evaluate-sg data=3dfront_bedroom model=llm
 ```
+
+`data`: `3dfront_bedroom`, `3dfront_diningroom`, `3dfront_livingroom`, `vg`
+
+`model`: `vanila_parser`, `llm`, `instructscene_bedroom`, `instructscene_diningroom`, `instructscene_livingroom`

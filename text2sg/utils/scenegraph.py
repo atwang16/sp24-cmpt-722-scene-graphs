@@ -1,11 +1,16 @@
 import os
 from dataclasses import dataclass, field
+from pprint import pprint
 from typing import Generator, Optional, Self
 
 import numpy as np
 from pyvis.network import Network
 
 from text2sg.utils.commonscenes import relationship_map
+
+
+class InvalidSceneGraphError(Exception):
+    pass
 
 
 @dataclass
@@ -65,21 +70,56 @@ class SceneGraph:
     objects: list[Object]
     relationships: list[Relationship]
 
+    def validate(
+        self, allowed_objects: Optional[list[str]] = None, allowed_relationships: Optional[list[str]] = None
+    ) -> bool:
+        # check object names
+        for obj in self.objects:
+            if allowed_objects is not None and obj.name not in allowed_objects:
+                raise InvalidSceneGraphError(f"Found invalid object name: {obj.name}")
+            if not isinstance(obj.id, int):
+                raise InvalidSceneGraphError(f"Found object_id which is not an integer: {obj.id}")
+
+        object_ids = set([obj.id for obj in self.objects])
+
+        # check relationships
+        for rel in self.relationships:
+            if allowed_relationships is not None and rel.type not in allowed_relationships:
+                raise InvalidSceneGraphError(f"Found invalid relationship type: {rel.type}")
+            if rel.subject.id not in object_ids:
+                raise InvalidSceneGraphError(f"Found subject_id which does not correspond to a real object: {rel}")
+            if rel.target.id not in object_ids:
+                raise InvalidSceneGraphError(f"Found target_id which does not correspond to a real object: {rel}")
+
+        return True
+
     @classmethod
     def from_json(cls, data: dict, id: Optional[str] = None) -> Self:
         objects = {obj["id"]: Object(**obj) for obj in data["objects"]}
         relationships = []
         for rel in data["relationships"]:
+            try:
+                subject = objects[rel["subject_id"]]
+            except KeyError:
+                raise InvalidSceneGraphError(
+                    f"Found subject_id which does not correspond to a real object: {rel}, object_ids={objects.keys()}"
+                )
+            try:
+                target = objects[rel["target_id"]]
+            except KeyError:
+                raise InvalidSceneGraphError(
+                    f"Found target_id which does not correspond to a real object: {rel}, object_ids={objects.keys()}"
+                )
             relationships.append(
                 Relationship(
                     id=rel.get("id"),
                     type=rel["type"],
-                    subject=objects[rel["subject_id"]],
-                    target=objects[rel["target_id"]],
+                    subject=subject,
+                    target=target,
                 )
             )
-            objects[rel["subject_id"]].relationships.append(relationships[-1])
-            objects[rel["target_id"]].relationships.append(relationships[-1])
+            subject.relationships.append(relationships[-1])
+            target.relationships.append(relationships[-1])
         return cls(
             id=id,
             objects=list(objects.values()),
@@ -184,7 +224,7 @@ class SceneGraph:
                 output["objects"].append({"id": obj.id, "name": obj.name, "attributes": obj.attributes})
             for rel in self.relationships:
                 output["relationships"].append(
-                    {"id": rel.id, "type": rel.type, "subject_id": rel.subject, "target_id": rel.target}
+                    {"id": rel.id, "type": rel.type, "subject_id": rel.subject.id, "target_id": rel.target.id}
                 )
 
         elif format == "commonscenes":
@@ -193,9 +233,11 @@ class SceneGraph:
                 output["objects"][obj.id] = obj.name
             for rel in self.relationships:
                 # TODO: -1 is not a great default value but there is no guarantee as of now that the generated scene
-                # graphs will be restricted to the relationship types. The only one we can "enforce" this for is the 
+                # graphs will be restricted to the relationship types. The only one we can "enforce" this for is the
                 # LLM method, since we can prompt it to restrict its relationship set to the allowed ones.
-                output["relationships"].append([rel.subject, rel.target, relationship_map.get(rel.type, -1), rel.type])
+                output["relationships"].append(
+                    [rel.subject.id, rel.target.id, relationship_map.get(rel.type, -1), rel.type]
+                )
 
         else:
             raise NotImplementedError(f"Format not supported: {format}")

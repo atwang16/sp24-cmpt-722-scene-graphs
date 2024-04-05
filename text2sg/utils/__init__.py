@@ -1,4 +1,4 @@
-from .scenegraph import SceneGraph
+from .scenegraph import SceneGraph, InvalidSceneGraphError
 
 
-__all__ = ["SceneGraph"]
+__all__ = ["SceneGraph", "InvalidSceneGraphError"]

@@ -29,7 +29,7 @@ Return the output in a JSON format according to the following format:
   ]
 }}"""
 
-THREEDFRONT_SCENE_GRAPH_PROMPT = """Please follow the examples in the Visual Genome dataset and generate a scene graph that best describes the following text:
+INSTRUCTSCENE_SCENE_GRAPH_PROMPT = """Please follow the examples in the Visual Genome dataset and generate a scene graph that best describes the following text:
 "{}"
 Return the output in a JSON format according to the following format:
 {{
@@ -50,9 +50,40 @@ Return the output in a JSON format according to the following format:
   ]
 }}
 
-The object name must be one of "armchair", "bookcase", "cabinet", "ceiling lamp", "chaise longue sofa", "chinese chair", "coffee table", "console table", "corner/side table", "desk", "dining chair", "dining table", "l-shaped sofa", "lazy sofa", "lounge chair", "loveseat sofa", "multi-seat sofa", "pendant lamp", "round end table", "shelf", "stool", "tv stand", "wardrobe", or "wine cabinet". All other objects in the scene should be skipped.
+The object ID should start with 0 and increment. Every subject_id and target_id in relationships should correspond to an existing object ID.
+
+The object name must be one of "armchair", "bookcase", "cabinet", "ceiling lamp", "chaise longue sofa", "chinese chair", "coffee table", "console table", "corner/side table", "desk", "dining chair", "dining table", "l-shaped sofa", "lazy sofa", "lounge chair", "loveseat sofa", "multi-seat sofa", "pendant lamp", "round end table", "shelf", "stool", "tv stand", "wardrobe", or "wine cabinet".
 
 The relationship type must be one of "above", "left of", "in front of", "closely left of", "closely in front of", "below", "right of", "behind", "closely right of", or "closely behind". Pick the one that matches the best for each relationship.
+"""
+
+
+COMMONSCENES_SCENE_GRAPH_PROMPT = """Please follow the examples in the Visual Genome dataset and generate a scene graph that best describes the following text:
+"{}"
+Return the output in a JSON format according to the following format:
+{{
+  "room_type": bedroom, diningroom, or livingroom,
+  "objects": [
+    {{
+      "id": id of object,
+      "name": name of object as string,
+      "attributes": array of string,
+    }}
+  ],
+  "relationships": [
+    {{
+        "type": type of relationship as string,
+        "subject_id": id of object which is the subject of the relationship,
+        "target_id": id of object which is the target of the relationship
+    }}
+  ]
+}}
+
+The object ID should start with 0 and increment. Every subject_id and target_id in relationships should correspond to an existing object ID.
+
+The object name must be one of "armchair", "bookcase", "cabinet", "ceiling lamp", "chaise longue sofa", "chinese chair", "coffee table", "console table", "corner/side table", "desk", "dining chair", "dining table", "l-shaped sofa", "lazy sofa", "lounge chair", "loveseat sofa", "multi-seat sofa", "pendant lamp", "round end table", "shelf", "stool", "tv stand", "wardrobe", or "wine cabinet".
+
+The relationship type must be one of "left", "right", "front", "behind", "close by", "above", "standing on", "bigger than", "smaller than", "taller than", "shorter than', "symmetrical to", "same style as", "same super category as", or "same material as". Pick the one that matches the best for each relationship.
 """
 
 
@@ -68,7 +99,8 @@ class LLMSceneParser(BaseSceneParser):
 
     prompts = {
         "open_vocabulary": OV_SCENE_GRAPH_PROMPT,
-        "3dfront": THREEDFRONT_SCENE_GRAPH_PROMPT,
+        "instructscene": INSTRUCTSCENE_SCENE_GRAPH_PROMPT,
+        "commonscenes": COMMONSCENES_SCENE_GRAPH_PROMPT,
     }
 
     def __init__(self, cfg: DictConfig) -> None:

@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from text2sg.data import get_dataloader
 from text2sg.models import sg_parser
+from text2sg.utils import InvalidSceneGraphError
 
 
 @hydra.main(version_base=None, config_path="../../config", config_name="eval_config")
@@ -29,23 +30,32 @@ def main(cfg: DictConfig) -> None:
     distances = []
     visualized_scenes = {}
     commonscenes_output = {"scans": []}
+    error_count = 0
+    processed_count = 0
     for idx, (id_, inp_description, target) in tqdm(enumerate(loader)):
         # load model
-        pred_scene_graph = model.parse(inp_description)
-        pred_scene_graph.id = id_
+        try:
+            pred_scene_graph = model.parse(inp_description)
+            pred_scene_graph.id = id_
+            pred_scene_graph.validate()
+        except InvalidSceneGraphError as e:
+            print(f"[ERROR] {e}")
+            error_count += 1
+        else:
+            # evaluate model
+            if idx % cfg.viz_frequency == 0:
+                visualized_scenes[id_] = inp_description
+                pred_scene_graph.visualize(output_dir)
+            distances.append(pred_scene_graph.compute_distance(target))
+            commonscenes_output["scans"].append(pred_scene_graph.export(format="commonscenes"))
 
-        # evaluate model
-        if idx % cfg.viz_frequency == 0:
-            visualized_scenes[id_] = inp_description
-            pred_scene_graph.visualize(output_dir)
-        distances.append(pred_scene_graph.compute_distance(target))
-        commonscenes_output["scans"].append(pred_scene_graph.export(format="commonscenes"))
-
+        processed_count += 1
         # end if we have enough samples
         if idx + 1 >= cfg.num_samples:
             break
 
     print(f"Average scene graph distance: {np.mean(np.array(distances))}")
+    print(f"Scene graph success rate: {(1 - error_count / processed_count) * 100:.2f}%")
     with open(os.path.join(output_dir, "results.json"), "w") as f:
         json.dump(
             {
@@ -57,6 +67,6 @@ def main(cfg: DictConfig) -> None:
             f,
             indent=4,
         )
-    
+
     with open(os.path.join(output_dir, "commonscenes_relationships.json"), "w") as f:
         json.dump(commonscenes_output, f, indent=4)

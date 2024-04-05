@@ -10,7 +10,7 @@ from nltk.corpus import cmudict
 from text2sg.utils import SceneGraph
 
 
-class ThreedFrontDataset:
+class InstructSceneThreedFrontDataset:
     """
     Much of this code is taken/adapted from InstructScene
 

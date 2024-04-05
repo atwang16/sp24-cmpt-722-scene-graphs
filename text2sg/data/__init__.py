@@ -1,9 +1,10 @@
 import sys
 
-from .threedfront import ThreedFrontDataset
+from .instructscene_3dfront import InstructSceneThreedFrontDataset
+from .commonscenes_3dfront import CommonScenesThreedFrontDataset
 from .vg import VisualGenomeDataset
 
-__all__ = ["ThreedFrontDataset", "VisualGenomeDataset"]
+__all__ = ["InstructSceneThreedFrontDataset", "VisualGenomeDataset", "CommonScenesThreedFrontDataset"]
 
 
 def get_dataloader(config):

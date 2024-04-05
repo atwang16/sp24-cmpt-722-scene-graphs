@@ -52,7 +52,7 @@ Return the output in a JSON format according to the following format:
 
 The object ID should start with 0 and increment. Every subject_id and target_id in relationships should correspond to an existing object ID.
 
-The object name must be one of "armchair", "bookcase", "cabinet", "ceiling lamp", "chaise longue sofa", "chinese chair", "coffee table", "console table", "corner/side table", "desk", "dining chair", "dining table", "l-shaped sofa", "lazy sofa", "lounge chair", "loveseat sofa", "multi-seat sofa", "pendant lamp", "round end table", "shelf", "stool", "tv stand", "wardrobe", or "wine cabinet".
+The object name must be one of {}.
 
 The relationship type must be one of "above", "left of", "in front of", "closely left of", "closely in front of", "below", "right of", "behind", "closely right of", or "closely behind". Pick the one that matches the best for each relationship.
 """
@@ -81,10 +81,14 @@ Return the output in a JSON format according to the following format:
 
 The object ID should start with 0 and increment. Every subject_id and target_id in relationships should correspond to an existing object ID.
 
-The object name must be one of "armchair", "bookcase", "cabinet", "ceiling lamp", "chaise longue sofa", "chinese chair", "coffee table", "console table", "corner/side table", "desk", "dining chair", "dining table", "l-shaped sofa", "lazy sofa", "lounge chair", "loveseat sofa", "multi-seat sofa", "pendant lamp", "round end table", "shelf", "stool", "tv stand", "wardrobe", or "wine cabinet".
+The object name must be one of {}.
 
 The relationship type must be one of "left", "right", "front", "behind", "close by", "above", "standing on", "bigger than", "smaller than", "taller than", "shorter than', "symmetrical to", "same style as", "same super category as", or "same material as". Pick the one that matches the best for each relationship.
 """
+
+THREEDFRONT_BEDROOM_OBJECTS = '"armchair", "bookshelf", "cabinet", "ceiling lamp", "chair", "children\'s cabinet", "coffee table", "desk", "double bed", "dressing chair", "dressing table", "kid\'s bed", "nightstand", "pendant lamp", "shelf", "single bed", "sofa", "stool", "table", "tv stand", "wardrobe", or "floor"'
+THREEDFRONT_DININGROOM_OBJECTS = '"armchair", "bookshelf", "cabinet", "ceiling lamp", "chaise longue sofa", "chinese chair", "coffee table", "console table", "corner side table", "desk", "dining chair", "dining table", "l-shaped sofa", "lazy sofa", "lounge chair", "loveseat sofa", "multi-seat sofa", "pendant lamp", "round end table", "shelf", "stool", "tv stand", "wardrobe", "wine cabinet", or "floor"'
+THREEDFRONT_LIVINGROOM_OBJECTS = '"armchair", "bookshelf", "cabinet", "ceiling lamp", "chaise longue sofa", "chinese chair", "coffee table", "console table", "corner side table", "desk", "dining chair", "dining table", "l-shaped sofa", "lazy sofa", "lounge chair", "loveseat sofa", "multi-seat sofa", "pendant lamp", "round end table", "shelf", "stool", "tv stand", "wardrobe", "wine cabinet", or "floor"'
 
 
 class LLMSceneParser(BaseSceneParser):
@@ -102,10 +106,16 @@ class LLMSceneParser(BaseSceneParser):
         "instructscene": INSTRUCTSCENE_SCENE_GRAPH_PROMPT,
         "commonscenes": COMMONSCENES_SCENE_GRAPH_PROMPT,
     }
+    object_list = {
+        "3dfront_bedroom": THREEDFRONT_BEDROOM_OBJECTS,
+        "3dfront_diningroom": THREEDFRONT_DININGROOM_OBJECTS,
+        "3dfront_livingroom": THREEDFRONT_LIVINGROOM_OBJECTS,
+    }
 
     def __init__(self, cfg: DictConfig) -> None:
         super().__init__(cfg)
         self.prompt = LLMSceneParser.prompts[cfg.prompt_type]
+        self.object_list = LLMSceneParser.object_list[cfg.room_type]
 
     def parse(self, text: str) -> SceneGraph:
         """Parse scene description into a structured scene specification.
@@ -120,7 +130,7 @@ class LLMSceneParser(BaseSceneParser):
         :return: structured scene specification
         """
         client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-        inp = self.prompt.format(text)
+        inp = self.prompt.format(text, self.object_list)
 
         response = client.chat.completions.create(
             model="gpt-4-0125-preview",

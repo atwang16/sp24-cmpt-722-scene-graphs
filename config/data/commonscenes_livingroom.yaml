@@ -1,0 +1,29 @@
+module: CommonscenesThreedFrontDataset
+room_type: livingroom
+relationships: .data/datasets/3dfront/CommonScenes/relationships_${data.room_type}_trainval.json
+object_types:
+  - armchair
+  - bookshelf
+  - cabinet
+  - ceiling_lamp
+  - chaise_longue_sofa
+  - chinese_chair
+  - coffee_table
+  - console_table
+  - corner_side_table
+  - desk
+  - dining_chair
+  - dining_table
+  - l_shaped_sofa
+  - lazy_sofa
+  - lounge_chair
+  - loveseat_sofa
+  - multi_seat_sofa
+  - pendant_lamp
+  - round_end_table
+  - shelf
+  - stool
+  - tv_stand
+  - wardrobe
+  - wine_cabinet
+  - floor

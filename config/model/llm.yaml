@@ -1,3 +1,4 @@
 module: LLM
 model_name: gpt-4-0125-preview
 prompt_type: commonscenes
+room_type: ${data.room_type}

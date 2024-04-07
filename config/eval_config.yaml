@@ -5,5 +5,5 @@ num_samples: 100
 
 defaults:
   - _self_
-  - data: 3dfront_bedroom
-  - model: vanilla_parser
+  - data: commonscenes_bedroom
+  - model: llm

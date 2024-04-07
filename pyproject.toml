@@ -38,6 +38,7 @@ dependencies = [
     "einops==0.7.0",
     "open_clip_torch==2.24.0",
     "transformers==4.39.3",
+    "pyvis",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

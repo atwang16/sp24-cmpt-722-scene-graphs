@@ -28,7 +28,7 @@ def main(cfg: DictConfig) -> None:
 
     # run model on data
     distances = []
-    visualized_scenes = {}
+    scenes = {}
     commonscenes_output = {"scans": []}
     error_count = 0
     processed_count = 0
@@ -37,21 +37,28 @@ def main(cfg: DictConfig) -> None:
         try:
             pred_scene_graph = model.parse(inp_description)
             pred_scene_graph.id = id_
-            pred_scene_graph.validate()
+            pred_scene_graph.validate(
+                allowed_objects=[obj_type.replace("_", " ") for obj_type in loader.object_types],
+                allowed_relationships=loader.predicate_types,
+            )
         except InvalidSceneGraphError as e:
             print(f"[ERROR] {e}")
             error_count += 1
         else:
             # evaluate model
             if idx % cfg.viz_frequency == 0:
-                visualized_scenes[id_] = inp_description
                 pred_scene_graph.visualize(output_dir)
+            scenes[id_] = {
+                "id": id_,
+                "description": inp_description,
+                "scene_graph": pred_scene_graph.export(format="json"),
+            }
             distances.append(pred_scene_graph.compute_distance(target))
             commonscenes_output["scans"].append(pred_scene_graph.export(format="commonscenes"))
 
         processed_count += 1
         # end if we have enough samples
-        if idx + 1 >= cfg.num_samples:
+        if idx + 1 - error_count >= cfg.num_samples:
             break
 
     print(f"Average scene graph distance: {np.mean(np.array(distances))}")
@@ -62,7 +69,7 @@ def main(cfg: DictConfig) -> None:
                 "run": cfg.run_name,
                 "ave_distance": distances,
                 "num_samples": cfg.num_samples,
-                "visualized": visualized_scenes,
+                "visualized": scenes,
             },
             f,
             indent=4,
@@ -70,3 +77,7 @@ def main(cfg: DictConfig) -> None:
 
     with open(os.path.join(output_dir, "commonscenes_relationships.json"), "w") as f:
         json.dump(commonscenes_output, f, indent=4)
+
+
+if __name__ == "__main__":
+    main()

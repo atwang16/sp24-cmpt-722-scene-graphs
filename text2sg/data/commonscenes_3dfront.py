@@ -4,10 +4,14 @@ import pickle
 from typing import Optional
 
 import numpy as np
+from openai import OpenAI
 from omegaconf import DictConfig
 from nltk.corpus import cmudict
 
 from text2sg.utils import SceneGraph
+
+
+PROMPT = "Rephrase the following text to make it more natural, while making as minimal changes to the content as possible and keeping the entire text in one paragraph: \n\n{}"
 
 
 class CommonScenesThreedFrontDataset:
@@ -21,31 +25,15 @@ class CommonScenesThreedFrontDataset:
     def __init__(
         self,
         cfg: DictConfig,
-        scene_ids: Optional[list[str]] = None,
         seed: Optional[int] = None,
     ) -> None:
         self.seed = seed
+        self.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        self.object_types: list[str] = list(cfg.object_types)
+        self.prompt = PROMPT
 
-        self._parse_train_stats(cfg.dataset_directory, cfg.train_stats)
-
-        if scene_ids:
-            self._tags = sorted([oi for oi in os.listdir(cfg.dataset_directory) if oi.split("_")[1] in scene_ids])
-        else:
-            self._tags = sorted([oi for oi in os.listdir(cfg.dataset_directory)])
-
-        self._dataset = []
-        for pi in self._tags:
-            self._dataset.append(
-                {
-                    "id": pi,
-                    "description_path": os.path.join(cfg.dataset_directory, pi, "descriptions.pkl"),
-                    "models_info_path": os.path.join(cfg.dataset_directory, pi, "models_info.pkl"),
-                }
-            )
-
-    @property
-    def object_types(self):
-        return self._object_types
+        with open(cfg.relationships, "r") as f:
+            self.relationships = json.load(f)
 
     @property
     def predicate_types(self):
@@ -92,32 +80,19 @@ class CommonScenesThreedFrontDataset:
     def __len__(self):
         return len(self._dataset)
 
-    def _parse_train_stats(self, dataset_directory, train_stats):
-        with open(os.path.join(dataset_directory, train_stats), "r") as f:
-            train_stats = json.load(f)
-
-        self._object_types = train_stats["object_types"]
-
     def __getitem__(self, idx):
-        sample = self._dataset[idx]
-        description_path = sample["description_path"]
-        models_info_path = sample["models_info_path"]
+        scene_graph = self.relationships["scans"][idx]
+        scene_id = scene_graph["scan"]
+        descriptions = {"obj_class_ids": {}, "obj_relations": []}
+        for object_id, object_name in scene_graph["objects"].items():
+            descriptions["obj_class_ids"][int(object_id)] = self.object_types.index(object_name)
+        for object_id, predicate_id, target_id, _ in scene_graph["relationships"]:
+            descriptions["obj_relations"].append((int(object_id), int(target_id), int(predicate_id)))
 
-        with open(description_path, "rb") as f:
-            descriptions = pickle.load(f)
-
-        with open(models_info_path, "rb") as f:
-            models_info = pickle.load(f)
-
-        # object_descs = [
-        #     np.random.choice((model_info["blip_caption"], model_info["msft_caption"], model_info["chatgpt_caption"]))
-        #     for model_info in models_info
-        # ]
-        object_descs = [mi["chatgpt_caption"] for mi in models_info]
-
-        text, selected_relations, selected_descs = self._fill_templates(
-            descriptions, self.object_types, self.predicate_types, object_descs, num_relations=(2, 4)
+        text, selected_relations, _ = self._fill_templates(
+            descriptions, self.object_types, self.predicate_types, None, num_relations=(2, 4)
         )
+        rephrased_text = self.rephrase(text)
 
         # build ground truth scene graph
         scene_graph = {
@@ -145,7 +120,7 @@ class CommonScenesThreedFrontDataset:
                 }
             )
 
-        return sample["id"], text, SceneGraph.from_json(scene_graph)
+        return scene_id, rephrased_text, SceneGraph.from_json(scene_graph)
 
     """
     Taken from https://stackoverflow.com/questions/20336524/verify-correct-use-of-a-and-an-in-english-texts-python
@@ -161,7 +136,6 @@ class CommonScenesThreedFrontDataset:
         word = word.split(" ")[0]
         article = "an" if CommonScenesThreedFrontDataset.starts_with_vowel_sound(word) else "a"
         return article
-
 
     def _fill_templates(
         self,
@@ -181,11 +155,12 @@ class CommonScenesThreedFrontDataset:
         obj_class_ids = desc["obj_class_ids"]  # map from object index to class id
 
         # Describe the relations between the main objects and others
-        selected_relation_indices = np.random.choice(
-            len(desc["obj_relations"]),
-            min(np.random.choice(num_relations), len(desc["obj_relations"])),
-            replace=False,
-        )
+        # selected_relation_indices = np.random.choice(
+        #     len(desc["obj_relations"]),
+        #     min(np.random.choice(num_relations), len(desc["obj_relations"])),
+        #     replace=False,
+        # )
+        selected_relation_indices = list(range(len(desc["obj_relations"])))
         selected_relations = [desc["obj_relations"][idx] for idx in selected_relation_indices]
         selected_relations = [
             (int(s), int(p), int(o)) for s, p, o in selected_relations
@@ -282,3 +257,21 @@ class CommonScenesThreedFrontDataset:
                 selected_relations,
                 selected_descs,
             )  # return `selected_relations`, `selected_descs` for evaluation
+
+    def rephrase(self, text: str):
+
+        inp = self.prompt.format(text)
+
+        response = self.client.chat.completions.create(
+            model="gpt-4-0125-preview",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an annotator helping to rephrase a text prompt to make it more natural.",
+                },
+                {"role": "user", "content": inp},
+            ],
+        )
+
+        out = response.choices[0].message.content
+        return out

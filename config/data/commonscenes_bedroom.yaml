@@ -1,7 +1,8 @@
-module: CommonscenesThreedFrontDataset
+module: CommonScenesThreedFrontDataset
 room_type: bedroom
 relationships: .data/datasets/3dfront/CommonScenes/relationships_${data.room_type}_trainval.json
 object_types:
+  - _scene_
   - armchair
   - bookshelf
   - cabinet

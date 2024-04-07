@@ -107,9 +107,9 @@ class LLMSceneParser(BaseSceneParser):
         "commonscenes": COMMONSCENES_SCENE_GRAPH_PROMPT,
     }
     object_list = {
-        "3dfront_bedroom": THREEDFRONT_BEDROOM_OBJECTS,
-        "3dfront_diningroom": THREEDFRONT_DININGROOM_OBJECTS,
-        "3dfront_livingroom": THREEDFRONT_LIVINGROOM_OBJECTS,
+        "bedroom": THREEDFRONT_BEDROOM_OBJECTS,
+        "diningroom": THREEDFRONT_DININGROOM_OBJECTS,
+        "livingroom": THREEDFRONT_LIVINGROOM_OBJECTS,
     }
 
     def __init__(self, cfg: DictConfig) -> None:

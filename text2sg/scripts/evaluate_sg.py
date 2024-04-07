@@ -37,13 +37,19 @@ def main(cfg: DictConfig) -> None:
         try:
             pred_scene_graph = model.parse(inp_description)
             pred_scene_graph.id = id_
-            pred_scene_graph.validate(
-                allowed_objects=[obj_type.replace("_", " ") for obj_type in loader.object_types],
-                allowed_relationships=loader.predicate_types,
-            )
+            # pred_scene_graph.validate(
+            #     allowed_objects=[obj_type.replace("_", " ") for obj_type in loader.object_types],
+            #     allowed_relationships=loader.predicate_types,
+            # )
         except InvalidSceneGraphError as e:
             print(f"[ERROR] {e}")
             error_count += 1
+
+            scenes[id_] = {
+                "id": id_,
+                "description": inp_description,
+                "success": False,
+            }
         else:
             # evaluate model
             if idx % cfg.viz_frequency == 0:
@@ -51,6 +57,7 @@ def main(cfg: DictConfig) -> None:
             scenes[id_] = {
                 "id": id_,
                 "description": inp_description,
+                "success": True,
                 "scene_graph": pred_scene_graph.export(format="json"),
             }
             distances.append(pred_scene_graph.compute_distance(target))

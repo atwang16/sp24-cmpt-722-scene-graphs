@@ -72,7 +72,7 @@ Return the output in a JSON format according to the following format:
   ],
   "relationships": [
     {{
-        "type": type of relationship as string,
+        "type": type of relationship as string. It must be one of "left", "right", "front", "behind", "close by", "above", "standing on", "bigger than", "smaller than", "taller than", "shorter than', "symmetrical to", "same style as", "same super category as", or "same material as"
         "subject_id": id of object which is the subject of the relationship,
         "target_id": id of object which is the target of the relationship
     }}
@@ -82,13 +82,11 @@ Return the output in a JSON format according to the following format:
 The object ID should start with 0 and increment. Every subject_id and target_id in relationships should correspond to an existing object ID.
 
 The object name must be one of {}.
-
-The relationship type must be one of "left", "right", "front", "behind", "close by", "above", "standing on", "bigger than", "smaller than", "taller than", "shorter than', "symmetrical to", "same style as", "same super category as", or "same material as". Pick the one that matches the best for each relationship.
 """
 
-THREEDFRONT_BEDROOM_OBJECTS = '"armchair", "bookshelf", "cabinet", "ceiling lamp", "chair", "children\'s cabinet", "coffee table", "desk", "double bed", "dressing chair", "dressing table", "kid\'s bed", "nightstand", "pendant lamp", "shelf", "single bed", "sofa", "stool", "table", "tv stand", "wardrobe", or "floor"'
+THREEDFRONT_BEDROOM_OBJECTS = '"armchair", "bookshelf", "cabinet", "ceiling lamp", "chair", "children cabinet", "coffee table", "desk", "double bed", "dressing chair", "dressing table", "kids bed", "nightstand", "pendant lamp", "shelf", "single bed", "sofa", "stool", "table", "tv stand", "wardrobe", or "floor"'
 THREEDFRONT_DININGROOM_OBJECTS = '"armchair", "bookshelf", "cabinet", "ceiling lamp", "chaise longue sofa", "chinese chair", "coffee table", "console table", "corner side table", "desk", "dining chair", "dining table", "l-shaped sofa", "lazy sofa", "lounge chair", "loveseat sofa", "multi-seat sofa", "pendant lamp", "round end table", "shelf", "stool", "tv stand", "wardrobe", "wine cabinet", or "floor"'
-THREEDFRONT_LIVINGROOM_OBJECTS = '"armchair", "bookshelf", "cabinet", "ceiling lamp", "chaise longue sofa", "chinese chair", "coffee table", "console table", "corner side table", "desk", "dining chair", "dining table", "l-shaped sofa", "lazy sofa", "lounge chair", "loveseat sofa", "multi-seat sofa", "pendant lamp", "round end table", "shelf", "stool", "tv stand", "wardrobe", "wine cabinet", or "floor"'
+THREEDFRONT_LIVINGROOM_OBJECTS = '"armchair", "bookshelf", "cabinet", "ceiling lamp", "chaise longue sofa", "chinese chair", "coffee table", "console table", "corner side table", "desk", "dining chair", "dining table", "l shaped sofa", "lazy sofa", "lounge chair", "loveseat sofa", "multi-seat sofa", "pendant lamp", "round end table", "shelf", "stool", "tv stand", "wardrobe", "wine cabinet", or "floor"'
 
 
 class LLMSceneParser(BaseSceneParser):
@@ -116,6 +114,13 @@ class LLMSceneParser(BaseSceneParser):
         super().__init__(cfg)
         self.prompt = LLMSceneParser.prompts[cfg.prompt_type]
         self.object_list = LLMSceneParser.object_list[cfg.room_type]
+
+        self.custom_mapping = {
+            "in front of": "front",
+            "front of": "front",
+            "larger than": "bigger than",
+            "same general category as": "same super category as",
+        }
 
     def parse(self, text: str) -> SceneGraph:
         """Parse scene description into a structured scene specification.
@@ -149,5 +154,9 @@ class LLMSceneParser(BaseSceneParser):
             output_json = json.loads(raw_output)
         except json.JSONDecodeError:
             raise ValueError(f"Failed to parse scene graph response from OpenAI as JSON:\n{raw_output}")
+
+        for idx, relationship in enumerate(output_json["relationships"]):
+            if relationship["type"] in self.custom_mapping:
+                output_json["relationships"][idx]["type"] = self.custom_mapping[relationship["type"]]
 
         return SceneGraph.from_json(output_json)

@@ -151,7 +151,7 @@ class InstructSceneThreedFrontDataset:
     @staticmethod
     def get_article(word):
         word = word.split(" ")[0]
-        article = "an" if ThreedFrontDataset.starts_with_vowel_sound(word) else "a"
+        article = "an" if InstructSceneThreedFrontDataset.starts_with_vowel_sound(word) else "a"
         return article
 
     @staticmethod
@@ -207,27 +207,27 @@ class InstructSceneThreedFrontDataset:
                 o_name = object_types[obj_class_ids[o]].replace("_", " ")
                 p_str = predicate_types[p]
                 if np.random.rand() > 0.5:
-                    subject = f"{ThreedFrontDataset.get_article(s_name).replace('a', 'A')} {s_name}"
+                    subject = f"{InstructSceneThreedFrontDataset.get_article(s_name).replace('a', 'A')} {s_name}"
                     predicate = f" is {p_str} "
-                    object = f"{ThreedFrontDataset.get_article(o_name)} {o_name}."
+                    object = f"{InstructSceneThreedFrontDataset.get_article(o_name)} {o_name}."
                 else:  # 50% of the time to reverse the order
-                    subject = f"{ThreedFrontDataset.get_article(o_name).replace('a', 'A')} {o_name}"
-                    predicate = f" is {ThreedFrontDataset.reverse_rel(p_str)} "
-                    object = f"{ThreedFrontDataset.get_article(s_name)} {s_name}."
+                    subject = f"{InstructSceneThreedFrontDataset.get_article(o_name).replace('a', 'A')} {o_name}"
+                    predicate = f" is {InstructSceneThreedFrontDataset.reverse_rel(p_str)} "
+                    object = f"{InstructSceneThreedFrontDataset.get_article(s_name)} {s_name}."
             else:
                 if np.random.rand() < 0.75:
                     s_name = object_descs[s]
                 else:  # 25% of the time to use the object type as the description
                     s_name = object_types[obj_class_ids[s]].replace("_", " ")
-                    s_name = f"{ThreedFrontDataset.get_article(s_name)} {s_name}"  # "a" or "an" is added
+                    s_name = f"{InstructSceneThreedFrontDataset.get_article(s_name)} {s_name}"  # "a" or "an" is added
                 if np.random.rand() < 0.75:
                     o_name = object_descs[o]
                 else:
                     o_name = object_types[obj_class_ids[o]].replace("_", " ")
-                    o_name = f"{ThreedFrontDataset.get_article(o_name)} {o_name}"
+                    o_name = f"{InstructSceneThreedFrontDataset.get_article(o_name)} {o_name}"
 
                 p_str = predicate_types[p]
-                rev_p_str = ThreedFrontDataset.reverse_rel(p_str)
+                rev_p_str = InstructSceneThreedFrontDataset.reverse_rel(p_str)
 
                 if p_str in ["left of", "right of"]:
                     if np.random.rand() < 0.5:

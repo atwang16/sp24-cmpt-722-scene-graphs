@@ -35,6 +35,13 @@ class CommonScenesThreedFrontDataset:
         with open(cfg.relationships, "r") as f:
             self.relationships = json.load(f)
 
+        self.existing_prompts_path = cfg.existing_prompts
+        if os.path.exists(cfg.existing_prompts):
+            with open(cfg.existing_prompts, "r") as g:
+                self.existing_prompts = json.load(g)
+        else:
+            self.existing_prompts = {}
+
     @property
     def predicate_types(self):
         return [
@@ -83,16 +90,28 @@ class CommonScenesThreedFrontDataset:
     def __getitem__(self, idx):
         scene_graph = self.relationships["scans"][idx]
         scene_id = scene_graph["scan"]
+
         descriptions = {"obj_class_ids": {}, "obj_relations": []}
         for object_id, object_name in scene_graph["objects"].items():
             descriptions["obj_class_ids"][int(object_id)] = self.object_types.index(object_name)
-        for object_id, predicate_id, target_id, _ in scene_graph["relationships"]:
-            descriptions["obj_relations"].append((int(object_id), int(target_id), int(predicate_id)))
+        for object_id, target_id, predicate_id, _ in scene_graph["relationships"]:
+            descriptions["obj_relations"].append((int(object_id), int(predicate_id), int(target_id)))
 
-        text, selected_relations, _ = self._fill_templates(
-            descriptions, self.object_types, self.predicate_types, None, num_relations=(2, 4)
-        )
-        rephrased_text = self.rephrase(text)
+        if scene_id in self.existing_prompts:
+            rephrased_text = self.existing_prompts[scene_id]
+            selected_relation_indices = list(range(len(descriptions["obj_relations"])))
+            selected_relations = [descriptions["obj_relations"][idx] for idx in selected_relation_indices]
+            selected_relations = [
+                (int(s), int(p), int(o)) for s, p, o in selected_relations
+            ]  # e.g., [(4, 2, 18), ...]; 4, 18 are class ids; 2 is predicate id
+        else:
+            text, selected_relations, _ = self._fill_templates(
+                descriptions, self.object_types, self.predicate_types, None
+            )
+            rephrased_text = self.rephrase(text)
+            self.existing_prompts[scene_id] = rephrased_text
+            with open(self.existing_prompts_path, "w") as f:
+                json.dump(self.existing_prompts, f)
 
         # build ground truth scene graph
         scene_graph = {

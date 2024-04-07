@@ -28,6 +28,7 @@ class InstructSceneParser(BaseSceneParser):
         self.max_length = config.data.max_length
         self.predicate_types = config.data.predicate_types
         self.condition_type = config.get("condition_type", "text")
+        self.use_commonscenes_relationships = config.get("use_commonscenes_relationships", False)
 
         # Initialize the model
         self.text_encoder = CLIPTextEncoder(config.network.text_encoder, device=self.device)
@@ -58,6 +59,22 @@ class InstructSceneParser(BaseSceneParser):
             ema_states.copy_to(text_to_sg_model.parameters())
         text_to_sg_model.eval()
         return text_to_sg_model
+
+    def _to_commonscenes(self, rel: str):
+        if self.use_commonscenes_relationships:
+            return {
+                "above": "above",
+                "left of": "left",
+                "in front of": "front",
+                "closely left of": "close by",
+                "closely in front of": "close by",
+                "right of": "right",
+                "behind": "behind",
+                "closely right of": "close by",
+                "closely behind": "close by",
+            }[rel]
+        else:
+            return rel
 
     def parse(self, text: str) -> SceneGraph:
         """Parse scene description into a structured scene specification.
@@ -123,21 +140,24 @@ class InstructSceneParser(BaseSceneParser):
         for i, obj_name in enumerate(object_names):
             scene_graph["objects"].append(
                 {
-                    "id": i + 1,  # 1 indexed
+                    "id": i,  # 1 indexed
                     "name": obj_name,
                     "attributes": [],
-                    "feature": objfeat_vq_indices[0, i] if objfeat_vq_indices is not None else None,
+                    # "feature": objfeat_vq_indices[0, i] if objfeat_vq_indices is not None else None,
                 }
             )
         for s in range(edges.shape[1]):
             for t in range(edges.shape[2]):
                 if edges[0, s, t] < len(self.predicate_types):
-                    scene_graph["relationships"].append(
-                        {
-                            "type": self.predicate_types[edges[0, s, t].item()],
-                            "subject_id": s,
-                            "target_id": t,
-                        }
-                    )
+                    try:
+                        scene_graph["relationships"].append(
+                            {
+                                "type": self._to_commonscenes(self.predicate_types[edges[0, s, t].item()]),
+                                "subject_id": s,
+                                "target_id": t,
+                            }
+                        )
+                    except KeyError as e:
+                        pass
 
         return SceneGraph.from_json(scene_graph)

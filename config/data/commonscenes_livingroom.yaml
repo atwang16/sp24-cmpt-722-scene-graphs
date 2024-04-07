@@ -1,6 +1,7 @@
 module: CommonScenesThreedFrontDataset
 room_type: livingroom
 relationships: .data/datasets/3dfront/CommonScenes/relationships_${data.room_type}_trainval.json
+existing_prompts: .data/datasets/3dfront/CommonScenes/prompts_${data.room_type}.json
 object_types:
   - _scene_
   - armchair

@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from text2sg.data import get_dataloader
 from text2sg.models import sg_parser
-from text2sg.utils import InvalidSceneGraphError
+from text2sg.utils import InvalidSceneGraphError, compute_accuracy
 
 
 @hydra.main(version_base=None, config_path="../../config", config_name="eval_config")
@@ -27,11 +27,11 @@ def main(cfg: DictConfig) -> None:
     model: sg_parser.BaseSceneParser = getattr(sg_parser, cfg.model.module)(cfg.model)
 
     # run model on data
-    distances = []
     scenes = {}
     commonscenes_output = {"scans": []}
     error_count = 0
     processed_count = 0
+    metrics = {"object_precision": [], "object_recall": [], "precision": [], "recall": [], "f1": [], "jaccard": []}
     for idx, (id_, inp_description, target) in tqdm(enumerate(loader)):
         # load model
         try:
@@ -60,7 +60,8 @@ def main(cfg: DictConfig) -> None:
                 "success": True,
                 "scene_graph": pred_scene_graph.export(format="json"),
             }
-            distances.append(pred_scene_graph.compute_distance(target))
+            for metric_name, value in compute_accuracy(pred_scene_graph, target).items():
+                metrics[metric_name].append(value)
             commonscenes_output["scans"].append(pred_scene_graph.export(format="commonscenes"))
 
         processed_count += 1
@@ -68,15 +69,18 @@ def main(cfg: DictConfig) -> None:
         if idx + 1 - error_count >= cfg.num_samples:
             break
 
-    print(f"Average scene graph distance: {np.mean(np.array(distances))}")
+    ave_metrics = {metric_name: np.mean(np.array(metrics[metric_name])) for metric_name in metrics}
+    for metric_name in metrics:
+        print(f"Average {metric_name}: {ave_metrics[metric_name]:.2f}")
     print(f"Scene graph success rate: {(1 - error_count / processed_count) * 100:.2f}%")
     with open(os.path.join(output_dir, "results.json"), "w") as f:
         json.dump(
             {
                 "run": cfg.run_name,
-                "ave_distance": distances,
                 "num_samples": cfg.num_samples,
                 "visualized": scenes,
+                "success_rate": 1 - error_count / processed_count,
+                **{metric_name: value for metric_name, value in ave_metrics.items()},
             },
             f,
             indent=4,

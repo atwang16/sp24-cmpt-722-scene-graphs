@@ -243,3 +243,43 @@ class SceneGraph:
             raise NotImplementedError(f"Format not supported: {format}")
 
         return output
+
+
+def compute_accuracy(pred: SceneGraph, target: SceneGraph) -> dict[str, float]:
+    """Compute accuracy metrics for a predicted scene graph compared to a target scene graph.
+
+    This function computes the following metrics:
+    - Precision: the fraction of correctly predicted relationships out of all predicted relationships
+    - Recall: the fraction of correctly predicted relationships out of all target relationships
+    - F1 score: the harmonic mean of precision and recall
+    - Jaccard similarity: the intersection over union of the predicted and target relationships
+
+    :param pred: the predicted scene graph
+    :param target: the target scene graph
+    :return: a tuple of precision, recall, F1 score, and Jaccard similarity
+    """
+    # accuracy of object classes
+    pred_objects = {(obj.name, tuple(obj.attributes)) for obj in pred.objects}
+    target_objects = {(obj.name, tuple(obj.attributes)) for obj in target.objects}
+    object_precision = len(pred_objects & target_objects) / len(pred_objects) if len(pred_objects) > 0 else 0
+    object_recall = len(pred_objects & target_objects) / len(target_objects) if len(target_objects) > 0 else 0
+
+    pred_relationships = {(rel.subject.name, rel.target.name, rel.type) for rel in pred.relationships}
+    target_relationships = {(rel.subject.name, rel.target.name, rel.type) for rel in target.relationships}
+
+    intersection = pred_relationships & target_relationships
+    union = pred_relationships | target_relationships
+
+    precision = len(intersection) / len(pred_relationships) if len(pred_relationships) > 0 else 0
+    recall = len(intersection) / len(target_relationships) if len(target_relationships) > 0 else 0
+    f1 = 2 * precision * recall / (precision + recall) if precision + recall > 0 else 0
+    jaccard = len(intersection) / len(union) if len(union) > 0 else 0
+
+    return {
+        "object_precision": object_precision,
+        "object_recall": object_recall,
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
+        "jaccard": jaccard,
+    }

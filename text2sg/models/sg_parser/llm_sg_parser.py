@@ -72,6 +72,7 @@ Return the output in a JSON format according to the following format:
   ],
   "relationships": [
     {{
+        "id": id of relationship,
         "type": type of relationship as string. It must be one of "left", "right", "front", "behind", "close by", "above", "standing on", "bigger than", "smaller than", "taller than", "shorter than', "symmetrical to", "same style as", "same super category as", or "same material as"
         "subject_id": id of object which is the subject of the relationship,
         "target_id": id of object which is the target of the relationship
@@ -79,9 +80,11 @@ Return the output in a JSON format according to the following format:
   ]
 }}
 
-The object ID should start with 0 and increment. Every subject_id and target_id in relationships should correspond to an existing object ID.
+The object and relationship IDs should start with 0 and increment. Every subject_id and target_id in relationships should correspond to an existing object ID.
 
 The object name must be one of {}.
+
+If a number of objects are specified, please include each object in the count as a separate node. For example, if the text specifies "two chairs", include two separate nodes for the chairs.
 """
 
 THREEDFRONT_BEDROOM_OBJECTS = '"armchair", "bookshelf", "cabinet", "ceiling lamp", "chair", "children cabinet", "coffee table", "desk", "double bed", "dressing chair", "dressing table", "kids bed", "nightstand", "pendant lamp", "shelf", "single bed", "sofa", "stool", "table", "tv stand", "wardrobe", or "floor"'

@@ -1,0 +1,10 @@
+run_name: eval_${data.module}_${model.module}
+output_dir: visualizations
+prompt: ???
+
+defaults:
+  - _self_
+  - data: commonscenes_bedroom
+  - model: llm
+
+validate: true

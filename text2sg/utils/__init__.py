@@ -1,4 +1,4 @@
-from .scenegraph import SceneGraph, InvalidSceneGraphError
+from .scenegraph import compute_accuracy, SceneGraph, InvalidSceneGraphError
 
 
-__all__ = ["SceneGraph", "InvalidSceneGraphError"]
+__all__ = ["compute_accuracy", "SceneGraph", "InvalidSceneGraphError"]

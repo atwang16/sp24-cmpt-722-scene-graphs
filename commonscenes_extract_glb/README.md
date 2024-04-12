@@ -102,6 +102,8 @@ python eval_3dfront.py --exp /media/ymxlzgy/Data/graphto3d_models/balancing/all 
 FOR CMPT722, generate glb and images:
 ```
 python eval_3dfront.py --exp checkpoint/balancing/all --epoch 180 --visualize True --evaluate_diversity False --num_samples 5 --gen_shape True --no_stool True --export_3d True
+python eval_3dfront.py --exp checkpoint/balancing/all --epoch 180 --visualize True --evaluate_diversity False --num_samples 5 --gen_shape True --no_stool True --export_3d True --t2sg_type LLM
+python eval_3dfront.py --exp checkpoint/balancing/all --epoch 180 --visualize True --evaluate_diversity False --num_samples 5 --gen_shape True --no_stool True --export_3d True --t2sg_type diffusion
 ```
 
 

@@ -31,16 +31,17 @@ def main(cfg: DictConfig) -> None:
     commonscenes_output = {"scans": []}
     error_count = 0
     processed_count = 0
-    metrics = {"object_precision": [], "object_recall": [], "precision": [], "recall": [], "f1": [], "jaccard": []}
+    metrics = {"object_precision": [], "object_recall": [], "object_f1": [], "precision": [], "recall": [], "f1": []}
     for idx, (id_, inp_description, target) in tqdm(enumerate(loader)):
         # load model
         try:
             pred_scene_graph = model.parse(inp_description)
             pred_scene_graph.id = id_
-            # pred_scene_graph.validate(
-            #     allowed_objects=[obj_type.replace("_", " ") for obj_type in loader.object_types],
-            #     allowed_relationships=loader.predicate_types,
-            # )
+            if cfg.validate:
+                pred_scene_graph.validate(
+                    allowed_objects=[obj_type.replace("_", " ") for obj_type in loader.object_types],
+                    allowed_relationships=loader.predicate_types,
+                )
         except InvalidSceneGraphError as e:
             print(f"[ERROR] {e}")
             error_count += 1

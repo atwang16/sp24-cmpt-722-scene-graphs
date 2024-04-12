@@ -1,4 +1,5 @@
 import os
+from collections import Counter
 from dataclasses import dataclass, field
 from pprint import pprint
 from typing import Generator, Optional, Self
@@ -258,28 +259,44 @@ def compute_accuracy(pred: SceneGraph, target: SceneGraph) -> dict[str, float]:
     :param target: the target scene graph
     :return: a tuple of precision, recall, F1 score, and Jaccard similarity
     """
+
+    def get_intersection(pred, target):
+        target = target.copy()
+        count = 0
+        for elem in pred:
+            if elem in target:
+                count += min(pred[elem], target[elem])
+                target[elem] = max(0, target[elem] - pred[elem])
+        return count
+
     # accuracy of object classes
-    pred_objects = {(obj.name, tuple(obj.attributes)) for obj in pred.objects}
-    target_objects = {(obj.name, tuple(obj.attributes)) for obj in target.objects}
-    object_precision = len(pred_objects & target_objects) / len(pred_objects) if len(pred_objects) > 0 else 0
-    object_recall = len(pred_objects & target_objects) / len(target_objects) if len(target_objects) > 0 else 0
+    # pred_objects = Counter([(obj.name, tuple(obj.attributes)) for obj in pred.objects])
+    # target_objects = Counter([(obj.name, tuple(obj.attributes)) for obj in target.objects])
+    pred_objects = Counter([obj.name for obj in pred.objects])
+    target_objects = Counter([obj.name.replace("_", " ") for obj in target.objects])
+    intersection_count = get_intersection(pred_objects, target_objects)
+    object_precision = intersection_count / pred_objects.total() if pred_objects.total() > 0 else 0
+    object_recall = intersection_count / target_objects.total() if target_objects.total() > 0 else 0
+    object_f1 = (
+        2 * object_precision * object_recall / (object_precision + object_recall)
+        if object_precision + object_recall > 0
+        else 0
+    )
 
-    pred_relationships = {(rel.subject.name, rel.target.name, rel.type) for rel in pred.relationships}
-    target_relationships = {(rel.subject.name, rel.target.name, rel.type) for rel in target.relationships}
+    pred_relationships = Counter([(rel.subject.name, rel.target.name, rel.type) for rel in pred.relationships])
+    target_relationships = Counter([(rel.subject.name.replace("_", " "), rel.target.name.replace("_", " "), rel.type) for rel in target.relationships])
 
-    intersection = pred_relationships & target_relationships
-    union = pred_relationships | target_relationships
+    intersection_count = get_intersection(pred_relationships, target_relationships)
 
-    precision = len(intersection) / len(pred_relationships) if len(pred_relationships) > 0 else 0
-    recall = len(intersection) / len(target_relationships) if len(target_relationships) > 0 else 0
-    f1 = 2 * precision * recall / (precision + recall) if precision + recall > 0 else 0
-    jaccard = len(intersection) / len(union) if len(union) > 0 else 0
+    rel_precision = intersection_count / pred_relationships.total() if pred_relationships.total() > 0 else 0
+    rel_recall = intersection_count / target_relationships.total() if target_relationships.total() > 0 else 0
+    rel_f1 = 2 * rel_precision * rel_recall / (rel_precision + rel_recall) if rel_precision + rel_recall > 0 else 0
 
     return {
         "object_precision": object_precision,
         "object_recall": object_recall,
-        "precision": precision,
-        "recall": recall,
-        "f1": f1,
-        "jaccard": jaccard,
+        "object_f1": object_f1,
+        "precision": rel_precision,
+        "recall": rel_recall,
+        "f1": rel_f1,
     }
